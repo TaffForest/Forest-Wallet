@@ -260,6 +260,22 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }
           </div>
         )}
         
+        {/* Balance section - prominent */}
+        <div style={{
+          background: 'rgba(255,255,255,0.03)',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: 20,
+          border: '1px solid rgba(255,255,255,0.05)'
+        }}>
+          <div style={{opacity: 0.6, fontSize: 11, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px'}}>
+            Balance
+          </div>
+          <div style={{fontSize: 28, fontWeight: 700, color: 'var(--forest)'}}>
+            {selectedWallet?.balance || '0'} MON
+          </div>
+        </div>
+
         {/* Address section - cleaner layout */}
         <div style={{marginBottom: 20}}>
           <div style={{opacity: 0.6, fontSize: 11, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px'}}>
@@ -282,22 +298,6 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }
           >
             {getCopyButtonText()}
           </button>
-        </div>
-
-        {/* Balance section - prominent */}
-        <div style={{
-          background: 'rgba(255,255,255,0.03)',
-          borderRadius: '12px',
-          padding: '16px',
-          marginBottom: 20,
-          border: '1px solid rgba(255,255,255,0.05)'
-        }}>
-          <div style={{opacity: 0.6, fontSize: 11, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px'}}>
-            Balance
-          </div>
-          <div style={{fontSize: 28, fontWeight: 700, color: 'var(--forest)'}}>
-            {selectedWallet?.balance || '0'} MON
-          </div>
         </div>
 
         {/* Action buttons - cleaner grid */}
