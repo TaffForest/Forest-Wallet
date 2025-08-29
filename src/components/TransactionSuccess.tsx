@@ -8,7 +8,7 @@ type Props = {
 }
 
 export default function TransactionSuccess({ txHash, amount, recipient, onClose }: Props) {
-  const explorerUrl = `https://explorer.monad.xyz/tx/${txHash}`
+  const explorerUrl = `https://monad-testnet.socialscan.io/tx/${txHash}`
   
   // Auto-close after 10 seconds
   useEffect(() => {
@@ -62,13 +62,10 @@ export default function TransactionSuccess({ txHash, amount, recipient, onClose 
           <div style={{
             width: '60px',
             height: '60px',
-            borderRadius: '50%',
-            background: 'var(--success)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 16px',
-            padding: '8px'
+            margin: '0 auto 16px'
           }}>
             <img 
               src={chrome.runtime.getURL('logo-forest.png')} 
