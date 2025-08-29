@@ -277,7 +277,7 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, 
           </div>
         </div>
 
-        {/* Address section - cleaner layout */}
+        {/* Address section with create wallet button */}
         <div style={{marginBottom: 20}}>
           <div style={{opacity: 0.6, fontSize: 11, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px'}}>
             Address
@@ -285,20 +285,39 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, 
           <div style={{fontSize: 13, fontWeight: 500, lineHeight: 1.4, color: 'var(--muted)'}}>
             {selectedWallet?.address ? `${selectedWallet.address.slice(0,6)}...${selectedWallet.address.slice(-4)}` : '—'}
           </div>
-          <button 
-            className="btn ghost" 
-            disabled={!selectedWallet || copyStatus === 'copying'} 
-            onClick={handleCopyAddress}
-            style={{
-              ...getCopyButtonStyle(),
-              marginTop: 8,
-              fontSize: '12px',
-              padding: '6px 12px',
-              borderRadius: '6px'
-            }}
-          >
-            {getCopyButtonText()}
-          </button>
+          <div style={{ display: 'flex', gap: '8px', marginTop: 8 }}>
+            <button 
+              className="btn ghost" 
+              disabled={!selectedWallet || copyStatus === 'copying'} 
+              onClick={handleCopyAddress}
+              style={{
+                ...getCopyButtonStyle(),
+                fontSize: '12px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                flex: 1
+              }}
+            >
+              {getCopyButtonText()}
+            </button>
+            {wallets.length < 5 && (
+              <button 
+                className="btn ghost" 
+                onClick={handleCreateWallet}
+                disabled={isCreatingWallet}
+                style={{
+                  fontSize: '12px',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  opacity: 0.8,
+                  border: '1px dashed rgba(255,255,255,0.2)',
+                  flex: 1
+                }}
+              >
+                {isCreatingWallet ? 'Creating...' : `+ Create Wallet ${wallets.length + 1}`}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Action buttons - cleaner grid */}
@@ -306,7 +325,7 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, 
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '8px',
-          marginBottom: wallets.length < 5 ? 16 : 0
+          marginBottom: 16
         }}>
           <button 
             className="btn ghost" 
@@ -341,7 +360,7 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, 
         </div>
 
         {/* Activity and Export buttons - separate rows */}
-        <div style={{ marginBottom: wallets.length < 5 ? 16 : 0 }}>
+        <div style={{ marginBottom: 0 }}>
           <button 
             className="btn ghost" 
             onClick={() => { handleActivity(); onActivity(); }}
@@ -372,25 +391,6 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, 
             Export Wallet
           </button>
         </div>
-        
-        {/* Create new wallet button - subtle */}
-        {wallets.length < 5 && (
-          <button 
-            className="btn ghost" 
-            onClick={handleCreateWallet}
-            disabled={isCreatingWallet}
-            style={{
-              fontSize: '12px',
-              width: '100%',
-              padding: '10px',
-              borderRadius: '8px',
-              opacity: 0.8,
-              border: '1px dashed rgba(255,255,255,0.2)'
-            }}
-          >
-            {isCreatingWallet ? 'Creating...' : `+ Create Wallet ${wallets.length + 1}`}
-          </button>
-        )}
       </div>
     </div>
   )
