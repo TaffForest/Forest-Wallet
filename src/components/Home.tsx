@@ -9,6 +9,7 @@ type Props = {
   onStake: () => void, 
   onMagma: () => void,
   onActivity: () => void,
+  onExport: () => void,
   onLogout: () => void 
 }
 
@@ -19,7 +20,7 @@ type Wallet = {
   name: string;
 }
 
-export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }: Props) {
+export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, onExport }: Props) {
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [selectedWalletIndex, setSelectedWalletIndex] = useState(0)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'success' | 'error'>('idle')
@@ -339,7 +340,7 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }
           </button>
         </div>
 
-        {/* Activity button - separate row */}
+        {/* Activity and Export buttons - separate rows */}
         <div style={{ marginBottom: wallets.length < 5 ? 16 : 0 }}>
           <button 
             className="btn ghost" 
@@ -350,10 +351,25 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }
               padding: '12px',
               borderRadius: '8px',
               border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.02)'
+              background: 'rgba(255,255,255,0.02)',
+              marginBottom: '8px'
             }}
           >
             📊 Activity
+          </button>
+          <button 
+            className="btn ghost" 
+            onClick={() => { handleActivity(); onExport(); }}
+            style={{
+              fontSize: '13px',
+              width: '100%',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.02)'
+            }}
+          >
+            🔑 Export Wallet
           </button>
         </div>
         
