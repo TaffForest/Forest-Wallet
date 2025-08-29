@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getRuntimePassword, updateActivity, updateActivityOnUse } from '../session'
 import { unlock, accountFromMnemonic } from '../keys'
+import { getTransactionHistory } from '../monad'
 
 type Props = {
   onBack: () => void
@@ -21,10 +22,14 @@ export default function Activity({ onBack }: Props) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedWallet, setSelectedWallet] = useState<string>('')
+  const [error, setError] = useState<string>('')
 
   useEffect(() => {
     const loadActivity = async () => {
       try {
+        setLoading(true)
+        setError('')
+        
         const pwd = getRuntimePassword()
         if (!pwd) return
         
@@ -33,50 +38,40 @@ export default function Activity({ onBack }: Props) {
         const acct = accountFromMnemonic(m, 0)
         setSelectedWallet(acct.address)
         
-        // Mock transaction data - in a real implementation, this would fetch from blockchain
-        const mockTransactions: Transaction[] = [
-          {
-            hash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-            type: 'receive',
-            amount: '100.5',
-            timestamp: Date.now() - 3600000, // 1 hour ago
-            status: 'confirmed',
-            from: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-            to: acct.address
-          },
-          {
-            hash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-            type: 'send',
-            amount: '25.0',
-            timestamp: Date.now() - 7200000, // 2 hours ago
-            status: 'confirmed',
-            from: acct.address,
-            to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-            fee: '0.001'
-          },
-          {
-            hash: '0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba',
-            type: 'stake',
-            amount: '50.0',
-            timestamp: Date.now() - 86400000, // 1 day ago
-            status: 'confirmed',
-            from: acct.address,
-            to: acct.address
-          },
-          {
-            hash: '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321',
-            type: 'receive',
-            amount: '75.25',
-            timestamp: Date.now() - 172800000, // 2 days ago
-            status: 'confirmed',
-            from: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-            to: acct.address
-          }
-        ]
+        // Fetch real transaction history from blockchain
+        const realTransactions = await getTransactionHistory(acct.address, 20)
         
-        setTransactions(mockTransactions)
+        // Convert blockchain data to our Transaction format
+        const formattedTransactions: Transaction[] = realTransactions.map(tx => {
+          const isIncoming = tx.to.toLowerCase() === acct.address.toLowerCase()
+          const isOutgoing = tx.from.toLowerCase() === acct.address.toLowerCase()
+          
+          let type: 'send' | 'receive' | 'stake' | 'unstake' = 'send'
+          if (isIncoming && !isOutgoing) {
+            type = 'receive'
+          } else if (isOutgoing && !isIncoming) {
+            type = 'send'
+          } else if (isIncoming && isOutgoing) {
+            // Self-transaction, could be stake/unstake
+            type = 'stake'
+          }
+          
+          return {
+            hash: tx.hash,
+            type,
+            amount: tx.value,
+            timestamp: tx.timestamp * 1000, // Convert to milliseconds
+            status: tx.status === 'success' ? 'confirmed' : 'failed',
+            from: tx.from,
+            to: tx.to,
+            fee: tx.gasPrice
+          }
+        })
+        
+        setTransactions(formattedTransactions)
       } catch (error) {
         console.error('Failed to load activity:', error)
+        setError('Failed to load transaction history. Please try again.')
       } finally {
         setLoading(false)
       }
@@ -174,13 +169,36 @@ export default function Activity({ onBack }: Props) {
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
-            Loading activity...
+            <div style={{ fontSize: '24px', marginBottom: '12px' }}>⏳</div>
+            <div style={{ fontSize: '16px', marginBottom: '8px' }}>Loading transactions...</div>
+            <div style={{ fontSize: '13px', opacity: 0.7 }}>Fetching from Monad testnet</div>
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--error)' }}>
+            <div style={{ fontSize: '24px', marginBottom: '12px' }}>⚠️</div>
+            <div style={{ fontSize: '16px', marginBottom: '8px' }}>Failed to load</div>
+            <div style={{ fontSize: '13px', opacity: 0.7 }}>{error}</div>
+            <button 
+              onClick={() => window.location.reload()} 
+              style={{
+                marginTop: '16px',
+                padding: '8px 16px',
+                background: 'var(--forest)',
+                color: 'var(--bg)',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '13px'
+              }}
+            >
+              Try Again
+            </button>
           </div>
         ) : transactions.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
-            <div style={{ fontSize: '16px', marginBottom: '8px' }}>No activity yet</div>
-            <div style={{ fontSize: '13px', opacity: 0.7 }}>Your transactions will appear here</div>
+            <div style={{ fontSize: '16px', marginBottom: '8px' }}>No transactions found</div>
+            <div style={{ fontSize: '13px', opacity: 0.7 }}>This wallet has no transaction history yet</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
