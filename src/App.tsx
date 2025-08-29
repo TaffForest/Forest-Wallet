@@ -51,7 +51,6 @@ export default function App() {
 
       <footer className="footer">
         <span>v0.0.3 • Testnet</span>
-        {view!=='splash' && <a style={{color:'var(--forest)'}} href="#" onClick={(e)=>{e.preventDefault(); setView('splash')}}>Replay intro</a>}
       </footer>
     </div>
   )
