@@ -68,9 +68,17 @@ export default function TransactionSuccess({ txHash, amount, recipient, onClose 
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 16px',
-            fontSize: '24px'
+            padding: '8px'
           }}>
-            ✅
+            <img 
+              src={chrome.runtime.getURL('logo-forest.png')} 
+              alt="Forest" 
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'contain' 
+              }} 
+            />
           </div>
           <h3 style={{
             margin: 0,
