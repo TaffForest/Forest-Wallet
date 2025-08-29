@@ -8,6 +8,7 @@ type Props = {
   onReceive: () => void, 
   onStake: () => void, 
   onMagma: () => void,
+  onActivity: () => void,
   onLogout: () => void 
 }
 
@@ -18,7 +19,7 @@ type Wallet = {
   name: string;
 }
 
-export default function Home({ onSend, onReceive, onStake, onMagma }: Props) {
+export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }: Props) {
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [selectedWalletIndex, setSelectedWalletIndex] = useState(0)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'success' | 'error'>('idle')
@@ -284,6 +285,24 @@ export default function Home({ onSend, onReceive, onStake, onMagma }: Props) {
             style={{fontSize: '13px', padding: '12px 8px'}}
           >
             Magma MEV
+          </button>
+        </div>
+
+        {/* Activity button - separate row */}
+        <div style={{ marginBottom: wallets.length < 5 ? 16 : 0 }}>
+          <button 
+            className="btn ghost" 
+            onClick={() => { handleActivity(); onActivity(); }}
+            style={{
+              fontSize: '13px',
+              width: '100%',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.02)'
+            }}
+          >
+            📊 Activity
           </button>
         </div>
         

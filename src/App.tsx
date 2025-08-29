@@ -6,11 +6,12 @@ import Send from './components/Send'
 import Receive from './components/Receive'
 import Stake from './components/Stake'
 import Magma from './components/Magma'
+import Activity from './components/Activity'
 import Unlock from './components/Unlock'
 import { setOnLock } from './session'
 
 export default function App() {
-  const [view, setView] = useState<'splash'|'onboard'|'unlock'|'home'|'send'|'receive'|'stake'|'magma'>('splash')
+  const [view, setView] = useState<'splash'|'onboard'|'unlock'|'home'|'send'|'receive'|'stake'|'magma'|'activity'>('splash')
 
   useEffect(() => {
     const killer = setTimeout(() => setView(v=> v==='splash' ? 'onboard' : v), 12000)
@@ -39,12 +40,14 @@ export default function App() {
         onReceive={()=>setView('receive')} 
         onStake={()=>setView('stake')} 
         onMagma={()=>setView('magma')}
+        onActivity={()=>setView('activity')}
         onLogout={()=>setView('onboard')}
       />}
       {view==='send' && <Send onBack={()=>setView('home')} />}
       {view==='receive' && <Receive onBack={()=>setView('home')} />}
       {view==='stake' && <Stake onBack={()=>setView('home')} />}
       {view==='magma' && <Magma onBack={()=>setView('home')} />}
+      {view==='activity' && <Activity onBack={()=>setView('home')} />}
 
       <footer className="footer">
         <span>v0.0.3 • Testnet</span>
