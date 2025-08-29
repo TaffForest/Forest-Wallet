@@ -3,6 +3,7 @@ import { unlock, accountFromMnemonic } from '../keys'
 import { sendNativeFromPK } from '../monad'
 import { getRuntimePassword, updateActivity, updateActivityOnUse } from '../session'
 import { listContacts, saveContact, removeContact, type Contact } from '../db'
+import TransactionSuccess from './TransactionSuccess'
 
 type Props = { onBack: () => void }
 
@@ -11,6 +12,10 @@ export default function Send({ onBack }: Props) {
   const [amt, setAmt] = useState('')
   const [busy, setBusy] = useState(false)
   const [book, setBook] = useState<Contact[]>([])
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [txHash, setTxHash] = useState('')
+  const [successAmount, setSuccessAmount] = useState('')
+  const [successRecipient, setSuccessRecipient] = useState('')
 
   useEffect(()=>{ listContacts().then(setBook) },[])
 
@@ -24,9 +29,21 @@ export default function Send({ onBack }: Props) {
       const pwd = getRuntimePassword(); if(!pwd) throw new Error('Session locked')
       const m = await unlock(pwd); updateActivityOnUse(); const acct = accountFromMnemonic(m,0)
       const res = await sendNativeFromPK(acct.privateKey, to.trim(), amt.trim())
-      alert(`Sent!\nTx: ${res?.hash}`)
-      onBack()
-    } catch(e:any) { alert(e?.message || 'Send failed') } finally { setBusy(false) }
+      
+      // Show success notification instead of alert
+      setTxHash(res?.hash || '')
+      setSuccessAmount(amt.trim())
+      setSuccessRecipient(to.trim())
+      setShowSuccess(true)
+      
+      // Clear form
+      setTo('')
+      setAmt('')
+    } catch(e:any) { 
+      alert(e?.message || 'Send failed') 
+    } finally { 
+      setBusy(false) 
+    }
   }
 
   async function addToBook() {
@@ -71,6 +88,19 @@ export default function Send({ onBack }: Props) {
           </div>
         )}
       </div>
+
+      {/* Transaction Success Modal */}
+      {showSuccess && (
+        <TransactionSuccess
+          txHash={txHash}
+          amount={successAmount}
+          recipient={successRecipient}
+          onClose={() => {
+            setShowSuccess(false)
+            onBack()
+          }}
+        />
+      )}
     </div>
   )
 }
