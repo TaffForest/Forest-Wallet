@@ -23,13 +23,40 @@ export default function Unlock({ onUnlocked, onNoVault }: Props) {
   }
 
   return (
-    <div className="content">
-      <div className="card">
-        <h3 style={{marginTop:0}}>Unlock</h3>
-        <input className="input" type="password" placeholder="Enter password"
-               value={pwd} onChange={(e)=>setPwd(e.target.value)} />
-        <div className="row" style={{marginTop:8}}>
-          <button className="btn" disabled={!pwd || busy} onClick={doUnlock}>Unlock</button>
+    <div className="content" style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '60vh'
+    }}>
+      <div className="card" style={{
+        maxWidth: '400px',
+        width: '100%',
+        textAlign: 'center'
+      }}>
+        <h3 style={{marginTop:0, marginBottom: '20px'}}>Unlock Wallet</h3>
+        <input 
+          className="input" 
+          type="password" 
+          placeholder="Enter your password"
+          value={pwd} 
+          onChange={(e)=>setPwd(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter' && pwd && !busy) {
+              doUnlock();
+            }
+          }}
+          style={{marginBottom: '16px'}}
+        />
+        <div className="row" style={{justifyContent: 'center'}}>
+          <button 
+            className="btn" 
+            disabled={!pwd || busy} 
+            onClick={doUnlock}
+            style={{minWidth: '120px'}}
+          >
+            {busy ? 'Unlocking...' : 'Unlock'}
+          </button>
         </div>
       </div>
     </div>

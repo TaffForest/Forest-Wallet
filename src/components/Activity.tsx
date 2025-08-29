@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getRuntimePassword, updateActivity } from '../session'
+import { getRuntimePassword, updateActivity, updateActivityOnUse } from '../session'
 import { unlock, accountFromMnemonic } from '../keys'
 
 type Props = {
@@ -29,6 +29,7 @@ export default function Activity({ onBack }: Props) {
         if (!pwd) return
         
         const m = await unlock(pwd)
+        updateActivityOnUse() // Update activity when using password
         const acct = accountFromMnemonic(m, 0)
         setSelectedWallet(acct.address)
         

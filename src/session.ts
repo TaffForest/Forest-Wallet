@@ -13,7 +13,8 @@ export const setRuntimePassword = (p: string) => {
 
 export const getRuntimePassword = () => {
   if (_pwd) {
-    updateActivity();
+    // Only update activity when actually using the password for operations
+    // Don't update on every get call to prevent excessive timer resets
     return _pwd;
   }
   return null;
@@ -31,6 +32,14 @@ export const setOnLock = (callback: () => void) => {
 export const updateActivity = () => {
   _lastActivity = Date.now();
   resetLockTimer();
+};
+
+export const updateActivityOnUse = () => {
+  // Update activity when password is actually used for operations
+  if (_pwd) {
+    _lastActivity = Date.now();
+    resetLockTimer();
+  }
 };
 
 export const resetLockTimer = () => {

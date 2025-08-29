@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { unlock, accountFromMnemonic } from '../keys'
 import { sendNativeFromPK } from '../monad'
-import { getRuntimePassword, updateActivity } from '../session'
+import { getRuntimePassword, updateActivity, updateActivityOnUse } from '../session'
 import { listContacts, saveContact, removeContact, type Contact } from '../db'
 
 type Props = { onBack: () => void }
@@ -22,7 +22,7 @@ export default function Send({ onBack }: Props) {
     try {
       setBusy(true)
       const pwd = getRuntimePassword(); if(!pwd) throw new Error('Session locked')
-      const m = await unlock(pwd); const acct = accountFromMnemonic(m,0)
+      const m = await unlock(pwd); updateActivityOnUse(); const acct = accountFromMnemonic(m,0)
       const res = await sendNativeFromPK(acct.privateKey, to.trim(), amt.trim())
       alert(`Sent!\nTx: ${res?.hash}`)
       onBack()

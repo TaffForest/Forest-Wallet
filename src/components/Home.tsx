@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { unlock, accountFromMnemonic, createAdditionalWallet, getStoredWallets, saveWallet, type StoredWallet } from '../keys'
 import { getBalance } from '../monad'
-import { getRuntimePassword, updateActivity, getTimeUntilLock } from '../session'
+import { getRuntimePassword, updateActivity, updateActivityOnUse, getTimeUntilLock } from '../session'
 
 type Props = { 
   onSend: () => void, 
@@ -39,6 +39,7 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }
         if (storedWallets.length === 0) {
           // Create initial wallet if none exist
           const m = await unlock(pwd)
+          updateActivityOnUse() // Update activity when using password
           const acct = accountFromMnemonic(m, 0)
           const balance = await getBalance(acct.address)
           
@@ -60,6 +61,7 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }
         } else {
           // Load existing wallets
           const m = await unlock(pwd)
+          updateActivityOnUse() // Update activity when using password
           const walletPromises = storedWallets.map(async (stored) => {
             const acct = accountFromMnemonic(m, stored.derivationIndex)
             const balance = await getBalance(acct.address)
@@ -155,6 +157,7 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }
 
       const newDerivationIndex = wallets.length;
       const { address } = await createAdditionalWallet(pwd, newDerivationIndex);
+      updateActivityOnUse() // Update activity when using password
       const balance = await getBalance(address);
       
       const newWalletId = Date.now().toString();
