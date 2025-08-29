@@ -355,7 +355,7 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, 
               marginBottom: '8px'
             }}
           >
-            📊 Activity
+            Activity
           </button>
           <button 
             className="btn ghost" 
@@ -369,7 +369,7 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, 
               background: 'rgba(255,255,255,0.02)'
             }}
           >
-            🔑 Export Wallet
+            Export Wallet
           </button>
         </div>
         
