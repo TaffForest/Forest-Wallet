@@ -10,7 +10,9 @@ export const rpc = new JsonRpcProvider(MONAD.rpcUrl, MONAD)
 
 export async function getBalance(addr: string) {
   const bal = await rpc.getBalance(addr)
-  return formatEther(bal)
+  const formatted = formatEther(bal)
+  // Format to 5 decimal places
+  return parseFloat(formatted).toFixed(5)
 }
 
 export async function sendNativeFromPK(privateKey: string, to: string, amountEth: string) {

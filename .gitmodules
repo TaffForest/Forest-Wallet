@@ -1,0 +1,6 @@
+[submodule "forest-defi/lib/forge-std"]
+	path = forest-defi/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "forest-defi/lib/openzeppelin-contracts"]
+	path = forest-defi/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts

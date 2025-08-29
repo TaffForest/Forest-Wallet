@@ -5,9 +5,12 @@ import { getRuntimePassword, updateActivity, updateActivityOnUse } from '../sess
 import { listContacts, saveContact, removeContact, type Contact } from '../db'
 import TransactionSuccess from './TransactionSuccess'
 
-type Props = { onBack: () => void }
+type Props = { 
+  onBack: () => void;
+  selectedWalletIndex?: number;
+}
 
-export default function Send({ onBack }: Props) {
+export default function Send({ onBack, selectedWalletIndex = 0 }: Props) {
   const [to, setTo] = useState('')
   const [amt, setAmt] = useState('')
   const [busy, setBusy] = useState(false)
@@ -27,7 +30,7 @@ export default function Send({ onBack }: Props) {
     try {
       setBusy(true)
       const pwd = getRuntimePassword(); if(!pwd) throw new Error('Session locked')
-      const m = await unlock(pwd); updateActivityOnUse(); const acct = accountFromMnemonic(m,0)
+      const m = await unlock(pwd); updateActivityOnUse(); const acct = accountFromMnemonic(m, selectedWalletIndex)
       const res = await sendNativeFromPK(acct.privateKey, to.trim(), amt.trim())
       
       // Show success notification instead of alert

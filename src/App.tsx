@@ -5,6 +5,7 @@ import Home from './components/Home'
 import Send from './components/Send'
 import Receive from './components/Receive'
 import Stake from './components/Stake'
+import DeFi from './components/DeFi'
 import Magma from './components/Magma'
 import Activity from './components/Activity'
 import Export from './components/Export'
@@ -12,7 +13,8 @@ import Unlock from './components/Unlock'
 import { setOnLock } from './session'
 
 export default function App() {
-  const [view, setView] = useState<'splash'|'onboard'|'unlock'|'home'|'send'|'receive'|'stake'|'magma'|'activity'|'export'>('splash')
+  const [view, setView] = useState<'splash'|'onboard'|'unlock'|'home'|'send'|'receive'|'stake'|'defi'|'magma'|'activity'|'export'>('splash')
+  const [selectedWalletIndex, setSelectedWalletIndex] = useState(0)
 
   useEffect(() => {
     const killer = setTimeout(() => setView(v=> v==='splash' ? 'onboard' : v), 12000)
@@ -40,14 +42,18 @@ export default function App() {
         onSend={()=>setView('send')} 
         onReceive={()=>setView('receive')} 
         onStake={()=>setView('stake')} 
+        onDeFi={()=>setView('defi')} 
         onMagma={()=>setView('magma')}
         onActivity={()=>setView('activity')}
         onExport={()=>setView('export')}
         onLogout={()=>setView('onboard')}
+        selectedWalletIndex={selectedWalletIndex}
+        onWalletIndexChange={setSelectedWalletIndex}
       />}
-      {view==='send' && <Send onBack={()=>setView('home')} />}
+      {view==='send' && <Send onBack={()=>setView('home')} selectedWalletIndex={selectedWalletIndex} />}
       {view==='receive' && <Receive onBack={()=>setView('home')} />}
       {view==='stake' && <Stake onBack={()=>setView('home')} />}
+      {view==='defi' && <DeFi onBack={()=>setView('home')} />}
       {view==='magma' && <Magma onBack={()=>setView('home')} />}
       {view==='activity' && <Activity onBack={()=>setView('home')} />}
       {view==='export' && <Export onBack={()=>setView('home')} />}

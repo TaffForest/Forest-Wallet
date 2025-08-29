@@ -7,10 +7,13 @@ type Props = {
   onSend: () => void, 
   onReceive: () => void, 
   onStake: () => void, 
+  onDeFi: () => void, 
   onMagma: () => void,
   onActivity: () => void,
   onExport: () => void,
-  onLogout: () => void 
+  onLogout: () => void,
+  selectedWalletIndex?: number,
+  onWalletIndexChange?: (index: number) => void
 }
 
 type Wallet = {
@@ -20,9 +23,9 @@ type Wallet = {
   name: string;
 }
 
-export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, onExport }: Props) {
+export default function Home({ onSend, onReceive, onStake, onDeFi, onMagma, onActivity, onExport, selectedWalletIndex: propSelectedIndex, onWalletIndexChange }: Props) {
   const [wallets, setWallets] = useState<Wallet[]>([])
-  const [selectedWalletIndex, setSelectedWalletIndex] = useState(0)
+  const [selectedWalletIndex, setSelectedWalletIndex] = useState(propSelectedIndex || 0)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'success' | 'error'>('idle')
   const [timeUntilLock, setTimeUntilLock] = useState(0)
   const [isCreatingWallet, setIsCreatingWallet] = useState(false)
@@ -239,7 +242,9 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, 
               value={selectedWalletIndex}
               onChange={(e) => {
                 handleActivity();
-                setSelectedWalletIndex(Number(e.target.value));
+                const newIndex = Number(e.target.value);
+                setSelectedWalletIndex(newIndex);
+                onWalletIndexChange?.(newIndex);
               }}
               style={{
                 width: '100%',
@@ -320,7 +325,7 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, 
           </div>
         </div>
 
-        {/* Action buttons - cleaner grid */}
+        {/* Action buttons - 2x3 grid */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
@@ -349,6 +354,13 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity, 
             style={{fontSize: '13px', padding: '12px 8px'}}
           >
             Stake
+          </button>
+          <button 
+            className="btn ghost" 
+            onClick={() => { handleActivity(); onDeFi(); }}
+            style={{fontSize: '13px', padding: '12px 8px'}}
+          >
+            DeFi
           </button>
           <button 
             className="btn ghost" 
