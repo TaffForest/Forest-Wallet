@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { unlock, accountFromMnemonic, createWallet } from '../keys'
+import { unlock, accountFromMnemonic, createAdditionalWallet, getStoredWallets, saveWallet, type StoredWallet } from '../keys'
 import { getBalance } from '../monad'
 import { getRuntimePassword, updateActivity, getTimeUntilLock } from '../session'
 
@@ -32,17 +32,51 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }
     (async () => {
       try {
         const pwd = getRuntimePassword(); if(!pwd) return
-        const m = await unlock(pwd)
-        const acct = accountFromMnemonic(m,0)
-        const balance = await getBalance(acct.address)
         
-        setWallets([{
-          id: '0',
-          address: acct.address,
-          balance,
-          name: 'Wallet 1'
-        }])
-      } catch {}
+        // Load stored wallets
+        const storedWallets = await getStoredWallets()
+        
+        if (storedWallets.length === 0) {
+          // Create initial wallet if none exist
+          const m = await unlock(pwd)
+          const acct = accountFromMnemonic(m, 0)
+          const balance = await getBalance(acct.address)
+          
+          const initialWallet: StoredWallet = {
+            id: '0',
+            name: 'Wallet 1',
+            derivationIndex: 0,
+            address: acct.address
+          }
+          
+          await saveWallet(initialWallet)
+          
+          setWallets([{
+            id: '0',
+            address: acct.address,
+            balance,
+            name: 'Wallet 1'
+          }])
+        } else {
+          // Load existing wallets
+          const m = await unlock(pwd)
+          const walletPromises = storedWallets.map(async (stored) => {
+            const acct = accountFromMnemonic(m, stored.derivationIndex)
+            const balance = await getBalance(acct.address)
+            return {
+              id: stored.id,
+              address: acct.address,
+              balance,
+              name: stored.name
+            }
+          })
+          
+          const loadedWallets = await Promise.all(walletPromises)
+          setWallets(loadedWallets)
+        }
+      } catch (error) {
+        console.error('Failed to load wallets:', error)
+      }
     })()
   }, [])
 
@@ -119,14 +153,28 @@ export default function Home({ onSend, onReceive, onStake, onMagma, onActivity }
       const pwd = getRuntimePassword();
       if (!pwd) throw new Error('No password available');
 
-      const { address } = await createWallet(pwd);
+      const newDerivationIndex = wallets.length;
+      const { address } = await createAdditionalWallet(pwd, newDerivationIndex);
       const balance = await getBalance(address);
       
+      const newWalletId = Date.now().toString();
+      const newWalletName = `Wallet ${wallets.length + 1}`;
+      
+      // Save to storage
+      const storedWallet: StoredWallet = {
+        id: newWalletId,
+        name: newWalletName,
+        derivationIndex: newDerivationIndex,
+        address
+      };
+      await saveWallet(storedWallet);
+      
+      // Update UI
       const newWallet: Wallet = {
-        id: Date.now().toString(),
+        id: newWalletId,
         address,
         balance,
-        name: `Wallet ${wallets.length + 1}`
+        name: newWalletName
       };
 
       setWallets(prev => [...prev, newWallet]);

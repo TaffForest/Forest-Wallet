@@ -3,6 +3,13 @@ import { get, set, del } from 'idb-keyval'
 import { scrypt } from 'scrypt-js'
 import { clearContacts } from './db'
 
+export type StoredWallet = {
+  id: string
+  name: string
+  derivationIndex: number
+  address: string
+}
+
 const COIN_TYPE_ETH = 60
 const PATH = (i = 0) => `m/44'/${COIN_TYPE_ETH}'/0'/0/${i}`
 
@@ -18,6 +25,38 @@ export async function createWallet(password: string) {
   await storeMnemonic(password, m.phrase)
   const acct = HDNodeWallet.fromMnemonic(m, PATH(0))
   return { address: acct.address, mnemonic: m.phrase }
+}
+
+export async function createAdditionalWallet(password: string, walletIndex: number) {
+  // Get the existing mnemonic
+  const m = await unlock(password)
+  // Create a new account from the same mnemonic but different derivation path
+  const acct = HDNodeWallet.fromMnemonic(m, PATH(walletIndex))
+  return { address: acct.address }
+}
+
+export async function getStoredWallets(): Promise<StoredWallet[]> {
+  const wallets = await get('wallets') || []
+  return wallets
+}
+
+export async function saveWallet(wallet: StoredWallet): Promise<void> {
+  const wallets = await getStoredWallets()
+  const existingIndex = wallets.findIndex(w => w.id === wallet.id)
+  
+  if (existingIndex >= 0) {
+    wallets[existingIndex] = wallet
+  } else {
+    wallets.push(wallet)
+  }
+  
+  await set('wallets', wallets)
+}
+
+export async function removeWallet(walletId: string): Promise<void> {
+  const wallets = await getStoredWallets()
+  const filteredWallets = wallets.filter(w => w.id !== walletId)
+  await set('wallets', filteredWallets)
 }
 
 export async function importExisting(password: string, phrase: string) {
