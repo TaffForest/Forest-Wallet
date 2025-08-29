@@ -1,66 +1,131 @@
-## Foundry
+# Forest DeFi on Monad
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+**Forest DeFi** is a comprehensive staking and yield farming platform built on Monad blockchain, featuring:
 
-Foundry consists of:
+- **ForestStakingManager**: Core staking contract with adapter architecture
+- **fMON Token**: Staking rewards token (ERC20)
+- **AdapterMock**: Test adapter for development and testing
+- **Automated Harvesting**: Keeper scripts for periodic reward collection
+- **Comprehensive Testing**: Foundry-based unit tests
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## Quick Start
 
-## Documentation
+### Prerequisites
+- [Foundry](https://book.getfoundry.sh/getting-started/installation)
+- Node.js (for wallet integration)
 
-https://book.getfoundry.sh/
+### Build & Test
 
-## Usage
+```bash
+# Build contracts
+forge build
 
-### Build
+# Run tests
+forge test -vvvv
 
-```shell
-$ forge build
-```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
+# Run specific test
+forge test --match-test testDepositWithdraw -vvvv
 ```
 
 ### Deploy
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+```bash
+# Set environment variables
+export MONAD_RPC=https://testnet-rpc.monad.xyz
+export PRIVATE_KEY=0xYourPrivateKey
+export OWNER=0xYourOwnerAddress
+export FEE_RECIPIENT=0xYourTreasuryAddress
+
+# Deploy all contracts
+forge script script/DeployAll.s.sol --rpc-url $MONAD_RPC --broadcast
 ```
 
-### Cast
+### Harvest (Keeper)
 
-```shell
-$ cast <subcommand>
+```bash
+# Manual harvest
+export MANAGER=0xYourManagerAddress
+forge script script/Harvest.s.sol --rpc-url $MONAD_RPC --broadcast --private-key $PRIVATE_KEY
 ```
 
-### Help
+## Architecture
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+### Core Contracts
+
+**ForestStakingManager.sol**
+- Manages MON token staking and fMON rewards
+- Adapter-based architecture for flexible staking strategies
+- Fee collection and treasury management
+- Harvest functionality for reward distribution
+
+**fMON.sol**
+- ERC20 token representing staking shares
+- Minted/burned based on staking activity
+- Used for reward distribution and governance
+
+**AdapterMock.sol**
+- Test adapter for development
+- Simulates reward generation
+- Configurable reward rates
+
+### Testing
+
+Comprehensive test suite covering:
+- Deposit/withdraw functionality
+- Harvest with fee minting
+- Pro-rata share calculations
+- Reward distribution
+
+```bash
+# Run all tests
+forge test -vvvv
+
+# Run specific test categories
+forge test --match-contract ForestStakingManagerTest -vvvv
 ```
+
+## GitHub Actions
+
+### CI (build & tests)
+- On every push/PR to `main`, CI will install Foundry, build, and run tests.
+
+### Harvest workflow
+1. Add repo **Secrets** (`Settings → Secrets and variables → Actions → New repository secret`):
+   - `MONAD_RPC` = https://testnet-rpc.monad.xyz
+   - `PRIVATE_KEY` = deployer/keeper private key (testnet only)
+   - `MANAGER` = your deployed ForestStakingManager address (optional if provided at dispatch)
+2. Run manually: **Actions → Harvest → Run workflow** (optionally fill manager addr input).
+3. (Optional) Enable the cron in `harvest.yml` to run every 6h.
+
+> ⚠️ Never commit real mainnet keys. Use a dedicated testnet key for Actions.
+
+## Makefile Commands
+
+```bash
+make build    # Build contracts
+make deploy   # Deploy to testnet
+make harvest  # Run harvest script
+make test     # Run tests
+make clean    # Clean build artifacts
+```
+
+## Environment Variables
+
+Create a `.env` file based on `.env.example`:
+
+```bash
+# RPC + accounts
+MONAD_RPC=https://testnet-rpc.monad.xyz
+OWNER=0xYourOwnerAddress
+FEE_RECIPIENT=0xYourTreasuryAddress
+# For scripts that need signing (local only; DO NOT commit real keys)
+PRIVATE_KEY=0xYourDeployerPrivateKey
+# After deploy, set your manager addr here for convenience
+MANAGER=0xYourManagerAddress
+```
+
+## Documentation
+
+- [Foundry Book](https://book.getfoundry.sh/)
+- [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts/)
+- [Monad Documentation](https://docs.monad.xyz/)
