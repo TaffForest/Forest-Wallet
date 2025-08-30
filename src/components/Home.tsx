@@ -2,16 +2,13 @@ import { useEffect, useState } from 'react'
 import { unlock, accountFromMnemonic, createAdditionalWallet, getStoredWallets, saveWallet, type StoredWallet } from '../keys'
 import { getBalance } from '../monad'
 import { getRuntimePassword, updateActivity, updateActivityOnUse, getTimeUntilLock } from '../session'
+import { ethers } from 'ethers'
+import { DEFI } from '../defi/addresses'
 
 type Props = { 
   onSend: () => void, 
   onReceive: () => void, 
   onStake: () => void, 
-  onDeFi: () => void, 
-  onMagma: () => void,
-  onActivity: () => void,
-  onExport: () => void,
-  onLogout: () => void,
   selectedWalletIndex?: number,
   onWalletIndexChange?: (index: number) => void
 }
@@ -20,10 +17,12 @@ type Wallet = {
   id: string;
   address: string;
   balance: string;
+  nativeMonBalance: string;
+  erc20MonBalance: string;
   name: string;
 }
 
-export default function Home({ onSend, onReceive, onStake, onDeFi, onMagma, onActivity, onExport, selectedWalletIndex: propSelectedIndex, onWalletIndexChange }: Props) {
+export default function Home({ onSend, onReceive, onStake, selectedWalletIndex: propSelectedIndex, onWalletIndexChange }: Props) {
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [selectedWalletIndex, setSelectedWalletIndex] = useState(propSelectedIndex || 0)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'success' | 'error'>('idle')
@@ -60,6 +59,8 @@ export default function Home({ onSend, onReceive, onStake, onDeFi, onMagma, onAc
             id: '0',
             address: acct.address,
             balance,
+            nativeMonBalance: balance,
+            erc20MonBalance: '0',
             name: 'Wallet 1'
           }])
         } else {
@@ -69,10 +70,26 @@ export default function Home({ onSend, onReceive, onStake, onDeFi, onMagma, onAc
           const walletPromises = storedWallets.map(async (stored) => {
             const acct = accountFromMnemonic(m, stored.derivationIndex)
             const balance = await getBalance(acct.address)
+            
+            // Get ERC20 MON balance
+            let erc20MonBalance = '0'
+            try {
+              const provider = new ethers.JsonRpcProvider('https://testnet-rpc.monad.xyz')
+              const erc20MonContract = new ethers.Contract(DEFI.MON_TOKEN, [
+                "function balanceOf(address owner) external view returns (uint256)"
+              ], provider)
+              const erc20Balance = await erc20MonContract.balanceOf(acct.address)
+              erc20MonBalance = ethers.formatEther(erc20Balance)
+            } catch (err) {
+              console.warn('Failed to get ERC20 MON balance:', err)
+            }
+            
             return {
               id: stored.id,
               address: acct.address,
               balance,
+              nativeMonBalance: balance,
+              erc20MonBalance,
               name: stored.name
             }
           })
@@ -181,6 +198,8 @@ export default function Home({ onSend, onReceive, onStake, onDeFi, onMagma, onAc
         id: newWalletId,
         address,
         balance,
+        nativeMonBalance: balance,
+        erc20MonBalance: '0',
         name: newWalletName
       };
 
@@ -229,15 +248,15 @@ export default function Home({ onSend, onReceive, onStake, onDeFi, onMagma, onAc
 
   return (
     <div className="content">
-      <div className="card" style={{marginBottom:12, marginTop:8}}>
+      <div className="card" style={{marginBottom:8, marginTop:4}}>
         {/* Auto-lock timer - subtle and small */}
-        <div style={{fontSize: 10, color: 'var(--muted)', textAlign: 'center', marginBottom: 16, opacity: 0.7}}>
+        <div style={{fontSize: 10, color: 'var(--muted)', textAlign: 'center', marginBottom: 12, opacity: 0.7}}>
           Auto-lock in {formatTime(timeUntilLock)}
         </div>
         
         {/* Wallet selector - only show when needed */}
         {wallets.length > 1 && (
-          <div style={{marginBottom: 16}}>
+          <div style={{marginBottom: 12}}>
             <select 
               value={selectedWalletIndex}
               onChange={(e) => {
@@ -270,20 +289,31 @@ export default function Home({ onSend, onReceive, onStake, onDeFi, onMagma, onAc
         <div style={{
           background: 'rgba(255,255,255,0.03)',
           borderRadius: '12px',
-          padding: '16px',
-          marginBottom: 20,
+          padding: '12px',
+          marginBottom: 16,
           border: '1px solid rgba(255,255,255,0.05)'
         }}>
-          <div style={{opacity: 0.6, fontSize: 11, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px'}}>
-            Balance
+          <div style={{opacity: 0.6, fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px'}}>
+            Balances
           </div>
-          <div style={{fontSize: 28, fontWeight: 700, color: 'var(--forest)'}}>
-            {selectedWallet?.balance || '0'} MON
+          <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+              <div style={{fontSize: '12px', opacity: 0.7}}>Native MON</div>
+              <div style={{fontSize: '20px', fontWeight: '700', color: '#228b22'}}>
+                {selectedWallet?.nativeMonBalance || '0'} MON
+              </div>
+            </div>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+              <div style={{fontSize: '12px', opacity: 0.7}}>ERC20 MON</div>
+              <div style={{fontSize: '20px', fontWeight: '700', color: '#228b22'}}>
+                {selectedWallet?.erc20MonBalance || '0'} MON
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Address section with create wallet button */}
-        <div style={{marginBottom: 20}}>
+        <div style={{marginBottom: 16}}>
           <div style={{opacity: 0.6, fontSize: 11, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px'}}>
             Address
           </div>
@@ -325,18 +355,25 @@ export default function Home({ onSend, onReceive, onStake, onDeFi, onMagma, onAc
           </div>
         </div>
 
-        {/* Action buttons - 2x3 grid */}
+        {/* Main Action Buttons - Clean 3-column layout */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '8px',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: '10px',
           marginBottom: 16
         }}>
           <button 
             className="btn ghost" 
             onClick={() => { handleActivity(); onSend(); }} 
             disabled={!selectedWallet}
-            style={{fontSize: '13px', padding: '12px 8px'}}
+            style={{
+              fontSize: '13px', 
+              padding: '12px 8px',
+              border: '2px solid #228b22',
+              borderRadius: '10px',
+              fontWeight: '600',
+              background: 'rgba(34, 139, 34, 0.05)'
+            }}
           >
             Send
           </button>
@@ -344,66 +381,35 @@ export default function Home({ onSend, onReceive, onStake, onDeFi, onMagma, onAc
             className="btn ghost" 
             onClick={() => { handleActivity(); onReceive(); }} 
             disabled={!selectedWallet}
-            style={{fontSize: '13px', padding: '12px 8px'}}
+            style={{
+              fontSize: '13px', 
+              padding: '12px 8px',
+              border: '2px solid #228b22',
+              borderRadius: '10px',
+              fontWeight: '600',
+              background: 'rgba(34, 139, 34, 0.05)'
+            }}
           >
             Receive
           </button>
           <button 
             className="btn ghost" 
             onClick={() => { handleActivity(); onStake(); }}
-            style={{fontSize: '13px', padding: '12px 8px'}}
+            style={{
+              fontSize: '13px', 
+              padding: '12px 8px',
+              border: '2px solid #228b22',
+              borderRadius: '10px',
+              fontWeight: '600',
+              background: 'rgba(34, 139, 34, 0.05)'
+            }}
           >
             Stake
           </button>
-          <button 
-            className="btn ghost" 
-            onClick={() => { handleActivity(); onDeFi(); }}
-            style={{fontSize: '13px', padding: '12px 8px'}}
-          >
-            DeFi
-          </button>
-          <button 
-            className="btn ghost" 
-            onClick={() => { handleActivity(); onMagma(); }}
-            style={{fontSize: '13px', padding: '12px 8px'}}
-          >
-            Magma MEV
-          </button>
         </div>
 
-        {/* Activity and Export buttons - separate rows */}
-        <div style={{ marginBottom: 0 }}>
-          <button 
-            className="btn ghost" 
-            onClick={() => { handleActivity(); onActivity(); }}
-            style={{
-              fontSize: '13px',
-              width: '100%',
-              padding: '12px',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.02)',
-              marginBottom: '8px'
-            }}
-          >
-            Activity
-          </button>
-          <button 
-            className="btn ghost" 
-            onClick={() => { handleActivity(); onExport(); }}
-            style={{
-              fontSize: '13px',
-              width: '100%',
-              padding: '12px',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.02)'
-            }}
-          >
-            Export Wallet
-          </button>
-        </div>
       </div>
+
     </div>
   )
 }

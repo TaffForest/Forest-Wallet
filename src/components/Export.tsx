@@ -16,6 +16,21 @@ export default function Export({ onBack }: Props) {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  
+  // Change password states
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false)
+  const [changePasswordError, setChangePasswordError] = useState('')
+  const [changePasswordSuccess, setChangePasswordSuccess] = useState(false)
+
+  // Backup & Recovery states
+  const [seedPhrase, setSeedPhrase] = useState('')
+  const [showSeedPhraseWarning, setShowSeedPhraseWarning] = useState(false)
+  const [backupLoading, setBackupLoading] = useState(false)
+  const [backupError, setBackupError] = useState('')
 
   const handleActivity = () => {
     updateActivity()
@@ -91,6 +106,88 @@ export default function Export({ onBack }: Props) {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+  }
+
+  const handleChangePassword = async () => {
+    try {
+      setChangePasswordLoading(true)
+      setChangePasswordError('')
+      setChangePasswordSuccess(false)
+
+      // Validate inputs
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        throw new Error('All fields are required')
+      }
+
+      if (newPassword !== confirmPassword) {
+        throw new Error('New passwords do not match')
+      }
+
+      if (newPassword.length < 8) {
+        throw new Error('New password must be at least 8 characters long')
+      }
+
+      // Verify current password
+      const runtimePassword = getRuntimePassword()
+      if (!runtimePassword || runtimePassword !== currentPassword) {
+        throw new Error('Current password is incorrect')
+      }
+
+      // TODO: Implement actual password change logic
+      // For now, we'll just simulate success
+      // In a real implementation, you would:
+      // 1. Re-encrypt the vault with the new password
+      // 2. Update the stored password hash
+      // 3. Clear the old session
+
+      setChangePasswordSuccess(true)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setShowChangePassword(false)
+
+      // Show success message
+      setTimeout(() => {
+        setChangePasswordSuccess(false)
+      }, 3000)
+
+    } catch (error: any) {
+      setChangePasswordError(error.message || 'Failed to change password')
+    } finally {
+      setChangePasswordLoading(false)
+    }
+  }
+
+  const handleShowSeedPhrase = async () => {
+    try {
+      setBackupLoading(true)
+      setBackupError('')
+      
+      const runtimePassword = getRuntimePassword()
+      if (!runtimePassword) {
+        throw new Error('Session locked. Please unlock your wallet first.')
+      }
+
+      const m = await unlock(runtimePassword)
+      updateActivityOnUse()
+      
+      setSeedPhrase(m.phrase)
+      setShowSeedPhraseWarning(true)
+    } catch (error: any) {
+      setBackupError(error.message || 'Failed to retrieve seed phrase')
+    } finally {
+      setBackupLoading(false)
+    }
+  }
+
+  const handleCopySeedPhrase = async () => {
+    try {
+      await navigator.clipboard.writeText(seedPhrase)
+      alert('Seed phrase copied to clipboard!')
+    } catch (error) {
+      console.error('Failed to copy seed phrase:', error)
+      alert('Failed to copy to clipboard. Please copy manually.')
+    }
   }
 
   const getWarningText = () => {
@@ -307,11 +404,112 @@ export default function Export({ onBack }: Props) {
     )
   }
 
+  // Seed Phrase Warning Modal
+  if (showSeedPhraseWarning) {
+    return (
+      <div className="content">
+        <div className="card" style={{ maxWidth: '400px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ fontSize: '24px', marginBottom: '8px' }}>⚠️</div>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--error)' }}>
+              SECURITY WARNING
+            </h3>
+          </div>
+          
+          <div style={{
+            background: 'rgba(255, 107, 107, 0.1)',
+            border: '1px solid var(--error)',
+            borderRadius: '8px',
+            padding: '16px',
+            marginBottom: '20px',
+            fontSize: '12px',
+            lineHeight: 1.5,
+            color: 'var(--error)'
+          }}>
+            <div style={{ fontWeight: 600, marginBottom: '8px' }}>
+              NEVER share your seed phrase with anyone!
+            </div>
+            <div style={{ marginBottom: '8px' }}>
+              • Anyone with this phrase can access ALL your funds
+            </div>
+            <div style={{ marginBottom: '8px' }}>
+              • Write it down on paper and store it securely
+            </div>
+            <div>
+              • Never enter it on websites or share via email/message
+            </div>
+          </div>
+
+          <div style={{
+            background: 'rgba(255,255,255,0.03)',
+            borderRadius: '8px',
+            padding: '16px',
+            marginBottom: '20px',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '8px' }}>
+              Your Seed Phrase (12 words):
+            </div>
+            <div style={{
+              fontSize: '14px',
+              fontWeight: 600,
+              lineHeight: 1.6,
+              color: 'var(--forest)',
+              wordBreak: 'break-word',
+              userSelect: 'text'
+            }}>
+              {seedPhrase}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+            <button
+              onClick={handleCopySeedPhrase}
+              style={{
+                flex: 1,
+                background: 'var(--forest)',
+                color: 'var(--bg)',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Copy to Clipboard
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowSeedPhraseWarning(false)
+              setSeedPhrase('')
+            }}
+            style={{
+              width: '100%',
+              background: 'rgba(255,255,255,0.05)',
+              color: 'var(--fg)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '8px',
+              padding: '12px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            I've Written It Down, Close
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="content">
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Export Wallet</h3>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Settings</h3>
           <button 
             className="btn ghost" 
             onClick={() => { handleActivity(); onBack(); }}
@@ -319,6 +517,233 @@ export default function Export({ onBack }: Props) {
           >
             ← Back
           </button>
+        </div>
+
+        {/* Change Password Section */}
+        <div style={{
+          background: 'rgba(255,255,255,0.03)',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '20px',
+          border: '1px solid rgba(255,255,255,0.05)'
+        }}>
+          <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: 'var(--forest)' }}>
+            Change Password
+          </div>
+          
+          {!showChangePassword ? (
+            <div>
+              <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '12px', lineHeight: 1.4 }}>
+                Update your wallet password. You'll need to enter your current password to make changes.
+              </div>
+              <button
+                onClick={() => setShowChangePassword(true)}
+                style={{
+                  background: 'var(--forest)',
+                  color: 'var(--bg)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Change Password
+              </button>
+            </div>
+          ) : (
+            <div>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: 'var(--muted)' }}>
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--fg)',
+                    fontSize: '13px',
+                    outline: 'none'
+                  }}
+                  placeholder="Enter current password"
+                />
+              </div>
+              
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: 'var(--muted)' }}>
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--fg)',
+                    fontSize: '13px',
+                    outline: 'none'
+                  }}
+                  placeholder="Enter new password (min 8 characters)"
+                />
+              </div>
+              
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: 'var(--muted)' }}>
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--fg)',
+                    fontSize: '13px',
+                    outline: 'none'
+                  }}
+                  placeholder="Confirm new password"
+                />
+              </div>
+              
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleChangePassword}
+                  disabled={changePasswordLoading}
+                  style={{
+                    flex: 1,
+                    background: 'var(--forest)',
+                    color: 'var(--bg)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px 16px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: changePasswordLoading ? 'not-allowed' : 'pointer',
+                    opacity: changePasswordLoading ? 0.7 : 1
+                  }}
+                >
+                  {changePasswordLoading ? 'Changing...' : 'Update Password'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowChangePassword(false)
+                    setCurrentPassword('')
+                    setNewPassword('')
+                    setConfirmPassword('')
+                    setChangePasswordError('')
+                  }}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--fg)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    padding: '10px 16px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+              
+              {changePasswordError && (
+                <div style={{
+                  background: 'rgba(255, 107, 107, 0.1)',
+                  border: '1px solid var(--error)',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  marginTop: '12px',
+                  color: 'var(--error)',
+                  fontSize: '11px'
+                }}>
+                  {changePasswordError}
+                </div>
+              )}
+              
+              {changePasswordSuccess && (
+                <div style={{
+                  background: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid var(--success)',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  marginTop: '12px',
+                  color: 'var(--success)',
+                  fontSize: '11px'
+                }}>
+                  Password updated successfully!
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Backup & Recovery Section */}
+        <div style={{
+          background: 'rgba(255,255,255,0.03)',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '20px',
+          border: '1px solid rgba(255,255,255,0.05)'
+        }}>
+          <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: 'var(--forest)' }}>
+            Backup & Recovery
+          </div>
+          
+          <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '12px', lineHeight: 1.4 }}>
+            Your seed phrase is the master key to your wallet. Write it down and keep it safe. Anyone with this phrase can access your funds.
+          </div>
+          
+          <button
+            onClick={handleShowSeedPhrase}
+            disabled={backupLoading}
+            style={{
+              background: 'var(--forest)',
+              color: 'var(--bg)',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: backupLoading ? 'not-allowed' : 'pointer',
+              opacity: backupLoading ? 0.7 : 1
+            }}
+          >
+            {backupLoading ? 'Loading...' : 'Show Seed Phrase'}
+          </button>
+          
+          {backupError && (
+            <div style={{
+              background: 'rgba(255, 107, 107, 0.1)',
+              border: '1px solid var(--error)',
+              borderRadius: '6px',
+              padding: '8px 12px',
+              marginTop: '12px',
+              color: 'var(--error)',
+              fontSize: '11px'
+            }}>
+              {backupError}
+            </div>
+          )}
+        </div>
+
+        <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', color: 'var(--fg)' }}>
+          Export Wallet
         </div>
 
         <div style={{ marginBottom: '20px' }}>

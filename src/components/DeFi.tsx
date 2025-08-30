@@ -27,7 +27,10 @@ const MANAGER_ABI = [
   "function unstake(uint256 fMONAmount) external",
   "function harvest() external",
   "function totalStaked() external view returns (uint256)",
-  "function fMONToken() external view returns (address)"
+  "function fMONToken() external view returns (address)",
+  "function getPendingRewards(address user) external view returns (uint256)",
+  "function userStaked(address user) external view returns (uint256)",
+  "function userfMON(address user) external view returns (uint256)"
 ]
 
 export default function DeFi({ onBack }: Props) {
@@ -92,11 +95,42 @@ export default function DeFi({ onBack }: Props) {
         ], provider);
         
         // Fetch data with error handling
-        const [userInfo, exchangeRate, fmonBalance] = await Promise.all([
-          managerContract.getUserInfo(userAddress),
-          managerContract.exchangeRate ? managerContract.exchangeRate() : Promise.resolve(ethers.parseEther('1')),
-          fmonContract.balanceOf(userAddress)
-        ]);
+        let userInfo;
+        let exchangeRate;
+        let fmonBalance;
+        
+        try {
+          userInfo = await managerContract.getUserInfo(userAddress);
+        } catch (userInfoErr) {
+          console.warn('Failed to get user info, trying individual calls:', userInfoErr);
+          // Fallback: get individual values
+          try {
+            const [staked, fMON, pendingRewards] = await Promise.all([
+              managerContract.userStaked(userAddress),
+              managerContract.userfMON(userAddress),
+              managerContract.getPendingRewards(userAddress)
+            ]);
+            userInfo = [staked, fMON, pendingRewards, 0]; // lastHarvest defaults to 0
+          } catch (fallbackErr) {
+            console.warn('Fallback also failed, using defaults:', fallbackErr);
+            // Set default values if both methods fail
+            userInfo = [ethers.parseEther('0'), ethers.parseEther('0'), ethers.parseEther('0'), 0];
+          }
+        }
+        
+        try {
+          exchangeRate = await managerContract.exchangeRate();
+        } catch (exchangeErr) {
+          console.warn('Failed to get exchange rate:', exchangeErr);
+          exchangeRate = ethers.parseEther('1');
+        }
+        
+        try {
+          fmonBalance = await fmonContract.balanceOf(userAddress);
+        } catch (fmonErr) {
+          console.warn('Failed to get fMON balance:', fmonErr);
+          fmonBalance = ethers.parseEther('0');
+        }
         
         // Get native MON balance
         let nativeMonBalance = ethers.parseEther('0');
@@ -135,7 +169,11 @@ export default function DeFi({ onBack }: Props) {
         
       } catch (err) {
         console.error('Failed to fetch data:', err);
-        setError('Failed to load staking info: ' + (err as Error).message);
+        // Only set error if it's not a contract call failure (which we handle individually)
+        const errString = String(err);
+        if (!errString.includes('could not decode result data')) {
+          setError('Failed to load staking info: ' + (err as Error).message);
+        }
       } finally {
         setLoading(false);
         // Poll every 10 seconds
