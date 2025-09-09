@@ -247,32 +247,19 @@ export default function Export({ onBack }: Props) {
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
             <button
               onClick={handleCopy}
-              style={{
-                flex: 1,
-                background: 'var(--forest)',
-                color: 'var(--bg)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
+              className="enterprise-button"
+              style={{ flex: 1 }}
             >
               Copy to Clipboard
             </button>
             <button
               onClick={handleDownload}
-              style={{
+              className="enterprise-button"
+              style={{ 
                 flex: 1,
                 background: 'rgba(255,255,255,0.1)',
                 color: 'var(--fg)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                borderRadius: '8px',
-                padding: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer'
+                border: '1px solid rgba(255,255,255,0.2)'
               }}
             >
               Download File
@@ -296,16 +283,12 @@ export default function Export({ onBack }: Props) {
 
           <button
             onClick={() => { handleActivity(); onBack(); }}
+            className="enterprise-button"
             style={{
               width: '100%',
               background: 'rgba(255,255,255,0.1)',
               color: 'var(--fg)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: '8px',
-              padding: '12px',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer'
+              border: '1px solid rgba(255,255,255,0.2)'
             }}
           >
             Back to Wallet
@@ -367,16 +350,12 @@ export default function Export({ onBack }: Props) {
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={() => setShowWarning(false)}
+              className="enterprise-button"
               style={{
                 flex: 1,
                 background: 'rgba(255,255,255,0.1)',
                 color: 'var(--fg)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                borderRadius: '8px',
-                padding: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer'
+                border: '1px solid rgba(255,255,255,0.2)'
               }}
             >
               Cancel
@@ -384,15 +363,11 @@ export default function Export({ onBack }: Props) {
             <button
               onClick={handleExport}
               disabled={exportFormat === 'jsonKeystore' && !password.trim()}
+              className="enterprise-button"
               style={{
                 flex: 1,
                 background: exportFormat === 'jsonKeystore' && !password.trim() ? 'rgba(255,255,255,0.05)' : 'var(--error)',
                 color: exportFormat === 'jsonKeystore' && !password.trim() ? 'var(--muted)' : 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
                 cursor: exportFormat === 'jsonKeystore' && !password.trim() ? 'not-allowed' : 'pointer'
               }}
             >
@@ -465,17 +440,8 @@ export default function Export({ onBack }: Props) {
           <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
             <button
               onClick={handleCopySeedPhrase}
-              style={{
-                flex: 1,
-                background: 'var(--forest)',
-                color: 'var(--bg)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
+              className="enterprise-button"
+              style={{ flex: 1 }}
             >
               Copy to Clipboard
             </button>
@@ -486,16 +452,12 @@ export default function Export({ onBack }: Props) {
               setShowSeedPhraseWarning(false)
               setSeedPhrase('')
             }}
+            className="enterprise-button"
             style={{
               width: '100%',
               background: 'rgba(255,255,255,0.05)',
               color: 'var(--fg)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '8px',
-              padding: '12px',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer'
+              border: '1px solid rgba(255,255,255,0.1)'
             }}
           >
             I've Written It Down, Close
@@ -538,16 +500,8 @@ export default function Export({ onBack }: Props) {
               </div>
               <button
                 onClick={() => setShowChangePassword(true)}
-                style={{
-                  background: 'var(--forest)',
-                  color: 'var(--bg)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '10px 16px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
+                className="enterprise-button"
+                style={{ padding: '10px 16px', fontSize: '13px' }}
               >
                 Change Password
               </button>
@@ -624,15 +578,11 @@ export default function Export({ onBack }: Props) {
                 <button
                   onClick={handleChangePassword}
                   disabled={changePasswordLoading}
+                  className="enterprise-button"
                   style={{
                     flex: 1,
-                    background: 'var(--forest)',
-                    color: 'var(--bg)',
-                    border: 'none',
-                    borderRadius: '8px',
                     padding: '10px 16px',
                     fontSize: '13px',
-                    fontWeight: 600,
                     cursor: changePasswordLoading ? 'not-allowed' : 'pointer',
                     opacity: changePasswordLoading ? 0.7 : 1
                   }}
@@ -647,15 +597,13 @@ export default function Export({ onBack }: Props) {
                     setConfirmPassword('')
                     setChangePasswordError('')
                   }}
+                  className="enterprise-button"
                   style={{
                     background: 'rgba(255,255,255,0.05)',
                     color: 'var(--fg)',
                     border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
                     padding: '10px 16px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
+                    fontSize: '13px'
                   }}
                 >
                   Cancel
@@ -712,14 +660,10 @@ export default function Export({ onBack }: Props) {
           <button
             onClick={handleShowSeedPhrase}
             disabled={backupLoading}
+            className="enterprise-button"
             style={{
-              background: 'var(--forest)',
-              color: 'var(--bg)',
-              border: 'none',
-              borderRadius: '8px',
               padding: '10px 16px',
               fontSize: '13px',
-              fontWeight: 600,
               cursor: backupLoading ? 'not-allowed' : 'pointer',
               opacity: backupLoading ? 0.7 : 1
             }}
@@ -806,17 +750,8 @@ export default function Export({ onBack }: Props) {
 
         <button
           onClick={() => setShowWarning(true)}
-          style={{
-            width: '100%',
-            background: 'var(--forest)',
-            color: 'var(--bg)',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
+          className="enterprise-button"
+          style={{ width: '100%' }}
         >
           Continue to Export
         </button>
